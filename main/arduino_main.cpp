@@ -29,7 +29,7 @@ limitations under the License.
 #include <Wire.h>
 #include <Arduino_APDS9960.h>
 #include <bits/stdc++.h>
-#include <RGBConverter.h>
+#include <ColorConverterLib.h>
 
 #define APDS9960_INT 2
 #define I2C_SDA 21
@@ -110,13 +110,13 @@ void loop() {
     double hue, saturation, value;
     RGBConverterLib::RgbToHsv(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), hue, saturation, value);
 
-    string Color = classifyToColor(hue);
+    String Color = classifyToColor(hue);
     Serial.println(Color);
 
     vTaskDelay(1);
 }
 
-string classifyToColor(int hue) {
+String classifyToColor(int hue) {
     if (hue < 15)
   {
    return "Red";
