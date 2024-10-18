@@ -1,5 +1,5 @@
-RobotathonESP32
-====================
+Robotathon Repo for Team 5: Kinsolving Problems
+=====
 
 This is the repository that utilizes the ESP32 to control robots for the Robtathon competition. It uses the following components:
 * [Arduino Core for ESP32](https://github.com/espressif/arduino-esp32)
@@ -39,6 +39,8 @@ Choose the "Express" option. Enable the "Show all ESP-IDF tags" and select "v4.4
 
 ## 6. Using the Project
 The Arduino Core means that code can be written for the ESP32 just like you would for any Arduino board. To do this, use the `setup()` and `loop()` methods found in `arduino_main.cpp`.
+
+
 
 To build for the ESP32, click the "Build Project" button (cylinder) in the bottom taskbar.
 
