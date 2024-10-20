@@ -147,7 +147,7 @@ double initialColor() {
 
     double hue, saturation, value;
     ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
-    Serial.println("Color Sampled!");
+    Serial.println("Color Sampled! " + r + " " + g + " " + b + " ");
     return hue;
 }
 
@@ -179,23 +179,30 @@ double testColor(double sample) {
 
 // Arduino loop function. Runs in CPU 1
 void loop() {
+    double difference = 100;
+    double sample = 0;
      BP32.update();
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         GamepadPtr controller = myGamepads[i];
         if (controller && controller->isConnected()) {
           if (controller->l1() == 1) {
-                double sample = initialColor();
+                delay(1000);
+                Serial.println("Sampling color...")
+                sample = initialColor();
                 delay(3000);
-                Serial.println("Testing for Sampled Color!");
-                double difference;
+                Serial.println("Click the right trigger to begin checking...")
+                }
+          if (controller-r1() == 1 ) {
+            Serial.println("Testing for Sampled Color!");
                 while (abs(difference) > 20) {
                     difference = testColor(sample);
                     if (abs(difference) > 20) {
                       Serial.println("Not the same color!");
                       delay(1000);
                     }
-                }
-                Serial.println("Color Found!");
+                Serial.println("Continuing search...")
+          }
+              Serial.println("Color Found!");
               digitalWrite(2, HIGH); // writes a digital high to pin 2
               delay(10000); // waits for 10000 milliseconds (10 seconds)
               digitalWrite(2, LOW);
