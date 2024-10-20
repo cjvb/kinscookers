@@ -69,6 +69,7 @@ void onDisconnectedGamepad(GamepadPtr gp) {
 
 // Arduino setup function. Runs in CPU 1
 void setup() {
+    pinMode(2, OUTPUT);
     // Setup the Bluepad32 callbacks
 
     //sets up I2C protocol
@@ -88,32 +89,6 @@ void setup() {
 	ESP32PWM::allocateTimer(3);
 
     // TODO: Write your setup code here
-}
-
-// Arduino loop function. Runs in CPU 1
-void loop() {
-    
-
-    int r, g, b, a;
-    // Wait until color is read from the sensor 
-    while (!apds.colorAvailable()) { delay(5); }
-    apds.readColor(r, g, b, a);
-    // Read color from sensor apds.readColor(r, g, b, a);
-
-    int sum = r + g + b;
-    r /= sum; b /= sum; g /= sum;
-
-    r *= 256; b *= 256; g *= 256; //convert to RGB relative values
-
-    // import RGB to HSV library 
-
-    double hue, saturation, value;
-    RGBConverterLib::RgbToHsv(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b), hue, saturation, value);
-
-    String Color = classifyToColor(hue);
-    Serial.println(Color);
-
-    vTaskDelay(1);
 }
 
 String classifyToColor(int hue) {
@@ -147,6 +122,101 @@ String classifyToColor(int hue) {
   }
   else
   {
-    return "None";
+    return "Red";
   }
 }
+
+double initialColor() {
+      int r, g, b, a;
+    // Wait until color is read from the sensor 
+    while (!apds.colorAvailable()) { delay(5); }
+    apds.readColor(r, g, b, a);
+
+    float rf = r;
+    float gf = g;
+    float bf = b;
+    // Read color from sensor apds.readColor(r, g, b, a);
+
+    uint32_t sum = a;
+
+    rf /= sum; bf /= sum; gf /= sum;
+
+    rf *= 256; bf *= 256; gf *= 256; //convert to RGB relative values
+
+    // import RGB to HSV library 
+
+    double hue, saturation, value;
+    ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
+    Serial.println("Color Sampled!");
+    return hue;
+}
+
+double testColor(double sample) {
+    int r, g, b, a;
+    // Wait until color is read from the sensor 
+    while (!apds.colorAvailable()) { delay(5); }
+    apds.readColor(r, g, b, a);
+
+    float rf = r;
+    float gf = g;
+    float bf = b;
+    // Read color from sensor apds.readColor(r, g, b, a);
+
+    uint32_t sum = a;
+
+    rf /= sum; bf /= sum; gf /= sum;
+
+    rf *= 256; bf *= 256; gf *= 256; //convert to RGB relative values
+
+    // import RGB to HSV library 
+
+    double hue, saturation, value;
+    ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
+
+    return sample - hue;
+}
+
+
+// Arduino loop function. Runs in CPU 1
+void loop() {
+     BP32.update();
+    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+        GamepadPtr controller = myGamepads[i];
+        if (controller && controller->isConnected()) {
+          if (controller->l1() == 1) {
+                double sample = initialColor();
+                delay(3000);
+                Serial.println("Testing for Sampled Color!");
+                double difference;
+                while (abs(difference) > 20) {
+                    difference = testColor(sample);
+                    if (abs(difference) > 20) {
+                      Serial.println("Not the same color!");
+                      delay(1000);
+                    }
+                }
+                Serial.println("Color Found!");
+              digitalWrite(2, HIGH); // writes a digital high to pin 2
+              delay(10000); // waits for 10000 milliseconds (10 seconds)
+              digitalWrite(2, LOW);
+            }
+        }
+
+    }
+    // String Color = classifyToColor(int(hue * 360) % 330);
+    // Serial.print("Red: ");
+    // Serial.print(r);
+    // Serial.print(" Green: ");
+    // Serial.print(g);
+    // Serial.print(" Blue: " );
+    // Serial.print(b);
+    // Serial.print(" Ambient: ");
+    // Serial.print(a);
+    // Serial.print(" Hue: ");
+    // Serial.print(hue * 360);
+    // Serial.println(" " + Color);
+
+    vTaskDelay(1000);
+}
+
+
