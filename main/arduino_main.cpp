@@ -17,7 +17,7 @@ limitations under the License.
 #include "sdkconfig.h"
 #ifndef CONFIG_BLUEPAD32_PLATFORM_ARDUINO
 #error "Must only be compiled when using Bluepad32 Arduino platform"
-#endif  // !CONFIG_BLUEPAD32_PLATFORM_ARDUINO
+#endif // !CONFIG_BLUEPAD32_PLATFORM_ARDUINO
 
 #include <Arduino.h>
 #include <Bluepad32.h>
@@ -42,59 +42,65 @@ APDS9960 apds = APDS9960(I2C_0, APDS9960_INT);
 GamepadPtr myGamepads[BP32_MAX_GAMEPADS];
 
 // This callback gets called any time a new gamepad is connected.
-void onConnectedGamepad(GamepadPtr gp) {
-    bool foundEmptySlot = false;
-    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-        if (myGamepads[i] == nullptr) {
-            myGamepads[i] = gp;
-            foundEmptySlot = true;
-            break;
-        }
+void onConnectedGamepad(GamepadPtr gp)
+{
+  bool foundEmptySlot = false;
+  for (int i = 0; i < BP32_MAX_GAMEPADS; i++)
+  {
+    if (myGamepads[i] == nullptr)
+    {
+      myGamepads[i] = gp;
+      foundEmptySlot = true;
+      break;
     }
+  }
 }
 
-void onDisconnectedGamepad(GamepadPtr gp) {
-    
-    bool foundGamepad = false;
-    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-        if (myGamepads[i] == gp) {
-            myGamepads[i] = nullptr;
-            foundGamepad = true;
-            break;
-        }
+void onDisconnectedGamepad(GamepadPtr gp)
+{
+
+  bool foundGamepad = false;
+  for (int i = 0; i < BP32_MAX_GAMEPADS; i++)
+  {
+    if (myGamepads[i] == gp)
+    {
+      myGamepads[i] = nullptr;
+      foundGamepad = true;
+      break;
     }
+  }
 }
-
-
 
 // Arduino setup function. Runs in CPU 1
-void setup() {
-    pinMode(2, OUTPUT);
-    // Setup the Bluepad32 callbacks
+void setup()
+{
+  pinMode(2, OUTPUT);
+  // Setup the Bluepad32 callbacks
 
-    //sets up I2C protocol
-    I2C_0.begin(I2C_SDA, I2C_SCL, I2C_FREQ);
+  // sets up I2C protocol
+  I2C_0.begin(I2C_SDA, I2C_SCL, I2C_FREQ);
 
-    //sets up color sensor
-    apds.setInterruptPin(APDS9960_INT);
-    apds.begin();
-    Serial.begin(115200);
+  // sets up color sensor
+  apds.setInterruptPin(APDS9960_INT);
+  apds.begin();
+  Serial.begin(115200);
 
-    BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
-    BP32.forgetBluetoothKeys();
+  BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
+  BP32.forgetBluetoothKeys();
 
-    ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2);
-	ESP32PWM::allocateTimer(3);
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
 
-    // TODO: Write your setup code here
+  // TODO: Write your setup code here
 }
 
-String classifyToColor(int hue) {
-    if (hue < 15)
+String classifyToColor(int hue)
+{
+  if (hue < 15)
   {
-   return "Red";
+    return "Red";
   }
   else if (hue < 45)
   {
@@ -126,104 +132,137 @@ String classifyToColor(int hue) {
   }
 }
 
-double initialColor() {
-      int r, g, b, a;
-    // Wait until color is read from the sensor 
-    while (!apds.colorAvailable()) { delay(5); }
-    apds.readColor(r, g, b, a);
+double initialColor()
+{
+  int r, g, b, a;
+  // Wait until color is read from the sensor
+  while (!apds.colorAvailable())
+  {
+    delay(5);
+  }
+  apds.readColor(r, g, b, a);
 
-    float rf = r;
-    float gf = g;
-    float bf = b;
-    // Read color from sensor apds.readColor(r, g, b, a);
+  float rf = r;
+  float gf = g;
+  float bf = b;
+  // Read color from sensor apds.readColor(r, g, b, a);
 
-    uint32_t sum = a;
+  uint32_t sum = a;
 
-    rf /= sum; bf /= sum; gf /= sum;
+  rf /= sum;
+  bf /= sum;
+  gf /= sum;
 
-    rf *= 256; bf *= 256; gf *= 256; //convert to RGB relative values
+  rf *= 256;
+  bf *= 256;
+  gf *= 256; // convert to RGB relative values
 
-    // import RGB to HSV library 
+  // import RGB to HSV library
 
-    double hue, saturation, value;
-    ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
-    Serial.println("Color Sampled!");
-    return hue;
+  double hue, saturation, value;
+  ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
+  Serial.println("Color Sampled!");
+  return hue;
 }
 
-double testColor(double sample) {
-    int r, g, b, a;
-    // Wait until color is read from the sensor 
-    while (!apds.colorAvailable()) { delay(5); }
-    apds.readColor(r, g, b, a);
+double testColor(double sample)
+{
+  int r, g, b, a;
+  // Wait until color is read from the sensor
+  while (!apds.colorAvailable())
+  {
+    delay(5);
+  }
+  apds.readColor(r, g, b, a);
 
-    float rf = r;
-    float gf = g;
-    float bf = b;
-    // Read color from sensor apds.readColor(r, g, b, a);
+  float rf = r;
+  float gf = g;
+  float bf = b;
+  // Read color from sensor apds.readColor(r, g, b, a);
 
-    uint32_t sum = a;
+  uint32_t sum = a;
 
-    rf /= sum; bf /= sum; gf /= sum;
+  rf /= sum;
+  bf /= sum;
+  gf /= sum;
 
-    rf *= 256; bf *= 256; gf *= 256; //convert to RGB relative values
+  rf *= 256;
+  bf *= 256;
+  gf *= 256; // convert to RGB relative values
 
-    // import RGB to HSV library 
+  // import RGB to HSV library
 
-    double hue, saturation, value;
-    ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
+  double hue, saturation, value;
+  ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
 
-    return sample - hue;
+  return sample - hue;
 }
 
-
+vector<double> prevColors;
+double sample = 0;
 // Arduino loop function. Runs in CPU 1
-void loop() {
-    BP32.update();
-    double difference = 100;
-    double sample = 0;
-    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-        GamepadPtr controller = myGamepads[i];
-        if (controller && controller->isConnected()) {
-          if (controller->l1() == 1) {
-                delay(1000);
-                Serial.println("Sampling color...");
-                sample = initialColor();
-                delay(3000);
-                Serial.println("Click the right trigger to begin checking...");
-                }
-          if (controller->r1() == 1 ) {
-            Serial.println("Testing for Sampled Color!");
-                while (abs(difference) > 20) {
-                    difference = testColor(sample);
-                    if (abs(difference) > 20) {
-                      Serial.println("Not the same color!");
-                      delay(1000);
-                    }
-                Serial.println("Continuing search...");
-          }
-              Serial.println("Color Found!");
-              digitalWrite(2, HIGH); // writes a digital high to pin 2
-              delay(10000); // waits for 10000 milliseconds (10 seconds)
-              digitalWrite(2, LOW);
-            }
+void loop()
+{
+  BP32.update();
+  for (int i = 0; i < BP32_MAX_GAMEPADS; i++)
+  {
+    GamepadPtr controller = myGamepads[i];
+    if (controller && controller->isConnected())
+    {
+      if (controller->l1() == 1)
+      {
+        delay(1000);
+        Serial.println("Sampling color...");
+        sample = initialColor();
+        delay(3000);
+        Serial.println("Click the right trigger to begin checking...");
+      }
+      if (controller->r1() == 1)
+      {
+        Serial.println("Testing for Sampled Color!");
+        if (newColor(sample))
+        {
+          Serial.println("Not the same color!");
+          prevColors.push_back(sample);
+          delay(1000);
         }
-
+        else
+        {
+          Serial.println("Same as a previous color");
+          digitalWrite(2, HIGH); // writes a digital high to pin 2
+          delay(10000);          // waits for 10000 milliseconds (10 seconds)
+          digitalWrite(2, LOW);
+        }
+        Serial.println("Continuing search...");
+      }
     }
-    // String Color = classifyToColor(int(hue * 360) % 330);
-    // Serial.print("Red: ");
-    // Serial.print(r);
-    // Serial.print(" Green: ");
-    // Serial.print(g);
-    // Serial.print(" Blue: " );
-    // Serial.print(b);
-    // Serial.print(" Ambient: ");
-    // Serial.print(a);
-    // Serial.print(" Hue: ");
-    // Serial.print(hue * 360);
-    // Serial.println(" " + Color);
-
-    vTaskDelay(1000);
+  }
 }
 
+bool newColor(double color)
+{
+  double maxDiff = 20;
+  for (int i = 0; i < prevColors.size(); i++)
+  {
+    if (abs(prevColors[i] - color) < maxDiff)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+// String Color = classifyToColor(int(hue * 360) % 330);
+// Serial.print("Red: ");
+// Serial.print(r);
+// Serial.print(" Green: ");
+// Serial.print(g);
+// Serial.print(" Blue: " );
+// Serial.print(b);
+// Serial.print(" Ambient: ");
+// Serial.print(a);
+// Serial.print(" Hue: ");
+// Serial.print(hue * 360);
+// Serial.println(" " + Color);
 
+vTaskDelay(1000);
+}
