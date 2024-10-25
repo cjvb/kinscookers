@@ -242,9 +242,9 @@ void loop()
 bool newColor(double color)
 {
   double maxDiff = 20;
+  boolean isNew = true;
   for (int i = 0; i < prevColors.size(); i++)
   {
-    boolean isNew = true;
     if (abs(prevColors[i] - color) < maxDiff)
     {
       isNew = false;
