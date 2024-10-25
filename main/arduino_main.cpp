@@ -244,12 +244,14 @@ bool newColor(double color)
   double maxDiff = 20;
   for (int i = 0; i < prevColors.size(); i++)
   {
+    boolean isNew = true;
     if (abs(prevColors[i] - color) < maxDiff)
     {
-      return false;
+      isNew = false;
+      break;
     }
   }
-  return true;
+  return isNew;
 }
 // String Color = classifyToColor(int(hue * 360) % 330);
 // Serial.print("Red: ");
