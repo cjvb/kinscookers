@@ -132,7 +132,8 @@ String classifyToColor(int hue)
   }
 }
 
-double initialColor()
+
+std::vector<int> initialColor()
 {
   int r, g, b, a;
   // Wait until color is read from the sensor
@@ -142,27 +143,20 @@ double initialColor()
   }
   apds.readColor(r, g, b, a);
 
-  float rf = r;
-  float gf = g;
-  float bf = b;
-  // Read color from sensor apds.readColor(r, g, b, a);
+  Serial.print("RED: ");
+    Serial.print(r);
+    Serial.print(" GREEN: ");
+    Serial.print(g);
+    Serial.print(" BLUE: ");
+    Serial.print(b);
+    Serial.print(" AMBIENT: ");
+    Serial.println(a);
 
-  uint32_t sum = a;
-
-  rf /= sum;
-  bf /= sum;
-  gf /= sum;
-
-  rf *= 256;
-  bf *= 256;
-  gf *= 256; // convert to RGB relative values
-
-  // import RGB to HSV library
-
-  double hue, saturation, value;
-  ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
-  Serial.println("Color Sampled!");
-  return hue;
+  std::vector<int> rgb(3);
+  rgb[0] = r;
+  rgb[1] = g;
+  rgb[2] = b; 
+  return rgb; 
 }
 
 double testColor(double sample)
@@ -198,10 +192,8 @@ double testColor(double sample)
   return sample - hue;
 }
 
-double sample = 0;
-double difference = = 100;
+std::vector<int> sample;
 bool debugLoop = true;
-char buf[64];
 // Arduino loop function. Runs in CPU 1
 void loop()
 {
@@ -215,25 +207,28 @@ void loop()
       {
         Serial.println("Sampling initial color...");
         sample = initialColor();
-        if (debugLoop)
-        {
-          sprintf(buf, "Sample Value: %d", sample);
-          Serial.println(buf);
+        for(int i = 0; i < 3; i++) {
+          Serial.print(sample[i] + " ");
         }
         Serial.println("Click the right trigger to begin checking...");
       }
       if (controller->r1() == 1)
       {
-        difference = abs(sample - initialCoclor());
-        while (difference > 25)
+        int totalDiff = 0; 
+        std::vector<int> color = initialColor(); 
+        for(int i = 0; i < 3; i++) {
+          totalDiff += abs(color[i] - sample[i]);
+        }
+        Serial.println(totalDiff);
+        while (totalDiff > 50)
         {
           Serial.println("Not the same color!");
-          difference = abs(sample - initialCoclor());
-          if (debugLoop)
-          {
-            sprintf(buf, "Difference: %d", difference);
-            Serial.println(buf);
+          totalDiff = 0; 
+          color = initialColor(); 
+          for(int i = 0; i < 3; i++) {
+            totalDiff += abs(color[i] - sample[i]);
           }
+          Serial.println(totalDiff); 
           delay(1000);
         }
         Serial.println("Found inital color!");
@@ -244,6 +239,7 @@ void loop()
       }
     }
   }
+  vTaskDelay(2000);
 }
 
 // String Color = classifyToColor(int(hue * 360) % 330);
