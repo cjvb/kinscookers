@@ -198,8 +198,10 @@ double testColor(double sample)
   return sample - hue;
 }
 
-vector<double> prevColors;
 double sample = 0;
+double difference = = 100;
+bool debugLoop = true;
+char buf[64];
 // Arduino loop function. Runs in CPU 1
 void loop()
 {
@@ -211,48 +213,39 @@ void loop()
     {
       if (controller->l1() == 1)
       {
-        delay(1000);
-        Serial.println("Sampling color...");
+        Serial.println("Sampling initial color...");
         sample = initialColor();
-        delay(3000);
+        if (debugLoop)
+        {
+          sprintf(buf, "Sample Value: %d", sample);
+          Serial.println(buf);
+        }
         Serial.println("Click the right trigger to begin checking...");
       }
       if (controller->r1() == 1)
       {
-        Serial.println("Testing for Sampled Color!");
-        if (newColor(sample))
+        difference = abs(sample - initialCoclor());
+        while (difference > 25)
         {
           Serial.println("Not the same color!");
-          prevColors.push_back(sample);
+          difference = abs(sample - initialCoclor());
+          if (debugLoop)
+          {
+            sprintf(buf, "Difference: %d", difference);
+            Serial.println(buf);
+          }
           delay(1000);
         }
-        else
-        {
-          Serial.println("Same as a previous color");
-          digitalWrite(2, HIGH); // writes a digital high to pin 2
-          delay(10000);          // waits for 10000 milliseconds (10 seconds)
-          digitalWrite(2, LOW);
-        }
-        Serial.println("Continuing search...");
+        Serial.println("Found inital color!");
+        digitalWrite(2, HIGH); // writes a digital high to pin 2
+        delay(10000);          // waits for 10000 milliseconds (10 seconds)
+        digitalWrite(2, LOW);
+        delay(1000);
       }
     }
   }
 }
 
-bool newColor(double color)
-{
-  double maxDiff = 20;
-  boolean isNew = true;
-  for (int i = 0; i < prevColors.size(); i++)
-  {
-    if (abs(prevColors[i] - color) < maxDiff)
-    {
-      isNew = false;
-      break;
-    }
-  }
-  return isNew;
-}
 // String Color = classifyToColor(int(hue * 360) % 330);
 // Serial.print("Red: ");
 // Serial.print(r);
@@ -265,6 +258,3 @@ bool newColor(double color)
 // Serial.print(" Hue: ");
 // Serial.print(hue * 360);
 // Serial.println(" " + Color);
-
-vTaskDelay(1000);
-}
