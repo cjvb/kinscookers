@@ -132,7 +132,6 @@ String classifyToColor(int hue)
   }
 }
 
-
 std::vector<int> initialColor()
 {
   int r, g, b, a;
@@ -144,52 +143,29 @@ std::vector<int> initialColor()
   apds.readColor(r, g, b, a);
 
   Serial.print("RED: ");
-    Serial.print(r);
-    Serial.print(" GREEN: ");
-    Serial.print(g);
-    Serial.print(" BLUE: ");
-    Serial.print(b);
-    Serial.print(" AMBIENT: ");
-    Serial.println(a);
+  Serial.print(r);
+  Serial.print(" GREEN: ");
+  Serial.print(g);
+  Serial.print(" BLUE: ");
+  Serial.print(b);
+  Serial.print(" AMBIENT: ");
+  Serial.println(a);
 
   std::vector<int> rgb(3);
   rgb[0] = r;
   rgb[1] = g;
-  rgb[2] = b; 
-  return rgb; 
+  rgb[2] = b;
+  return rgb;
 }
 
-double testColor(double sample)
+int totalDiff(std::vector<int> v1, std::vector<int> v2)
 {
-  int r, g, b, a;
-  // Wait until color is read from the sensor
-  while (!apds.colorAvailable())
+  int diff = 0;
+  for (int i = 0; i < 3; i++)
   {
-    delay(5);
+    diff += abs(color[i] - sample[i]);
   }
-  apds.readColor(r, g, b, a);
-
-  float rf = r;
-  float gf = g;
-  float bf = b;
-  // Read color from sensor apds.readColor(r, g, b, a);
-
-  uint32_t sum = a;
-
-  rf /= sum;
-  bf /= sum;
-  gf /= sum;
-
-  rf *= 256;
-  bf *= 256;
-  gf *= 256; // convert to RGB relative values
-
-  // import RGB to HSV library
-
-  double hue, saturation, value;
-  ColorConverter::RgbToHsv(static_cast<uint8_t>(rf), static_cast<uint8_t>(gf), static_cast<uint8_t>(bf), hue, saturation, value);
-
-  return sample - hue;
+  return diff;
 }
 
 std::vector<int> sample;
@@ -207,28 +183,52 @@ void loop()
       {
         Serial.println("Sampling initial color...");
         sample = initialColor();
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++)
+        {
           Serial.print(sample[i] + " ");
         }
-        Serial.println("Click the right trigger to begin checking...");
+        std::vector<int> newColor = initialColor();
+        int diff = totalDiff(newColor, sample);
+        while (diff < 50)
+        {
+          Serial.println("Waiting to begin search");
+          delay(250);
+          newColor = initialColor();
+          diff = totalDiff(newColor, sample);
+        }
+
+        Serial.println("Beginning search..")
+        Serial.println(diff);
+        while (diff >= 50)
+        {
+          Serial.println("Not the same color!");
+          newColor = initialColor();
+          diff = totalDiff(newColor, sample);
+          Serial.println(diff);
+          delay(1000);
+        }
+        Serial.println("Found inital color!");
+        digitalWrite(2, HIGH); // writes a digital high to pin 2
+        delay(10000);          // waits for 10000 milliseconds (10 seconds)
+        digitalWrite(2, LOW);
+        delay(1000);
       }
       if (controller->r1() == 1)
       {
-        int totalDiff = 0; 
-        std::vector<int> color = initialColor(); 
-        for(int i = 0; i < 3; i++) {
-          totalDiff += abs(color[i] - sample[i]);
-        }
-        Serial.println(totalDiff);
-        while (totalDiff > 50)
+        int diff = 0;
+        std::vector<int> color = initialColor();
+        diff = totalDiff(color, sample);
+        Serial.println(diff);
+        while (diff > 50)
         {
           Serial.println("Not the same color!");
-          totalDiff = 0; 
-          color = initialColor(); 
-          for(int i = 0; i < 3; i++) {
-            totalDiff += abs(color[i] - sample[i]);
+          diff = 0;
+          color = initialColor();
+          for (int i = 0; i < 3; i++)
+          {
+            diff += abs(color[i] - sample[i]);
           }
-          Serial.println(totalDiff); 
+          Serial.println(diff);
           delay(1000);
         }
         Serial.println("Found inital color!");
