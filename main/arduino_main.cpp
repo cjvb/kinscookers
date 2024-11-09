@@ -187,6 +187,7 @@ void colorSensing(GamepadPtr controller)
         {
             Serial.print(sample[i] + " ");
         }
+        
         std::vector<int> newColor = initialColor();
         int diff = totalDiff(newColor, sample);
         while (diff < 50)
