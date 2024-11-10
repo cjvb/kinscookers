@@ -21,6 +21,7 @@
 #define I2C_SCL 22
 #define I2C_FREQ 100000
 
+
 TwoWire I2C_0 = TwoWire(0);
 APDS9960 apds = APDS9960(I2C_0, APDS9960_INT);
 
@@ -33,6 +34,7 @@ APDS9960 apds = APDS9960(I2C_0, APDS9960_INT);
 int joyX;
 int joyY;
 int currentMode;
+int power;
 std::vector<int> sample;
 // Servo servo;
 
@@ -125,6 +127,11 @@ void setup()
     BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
     BP32.forgetBluetoothKeys();
 
+
+    pinMode(2, OUTPUT);
+
+    I2C_0.begin(I2C_SDA, I2C_SCL, I2C_FREQ);
+
     // servo.attach(15);
 
     // motor controller outputs
@@ -135,10 +142,23 @@ void setup()
     pinMode(IN4, OUTPUT);
     pinMode(ENB, OUTPUT);
 
+    apds.setInterruptPin(APDS9960_INT);
+    apds.begin();
     Serial.begin(115200);
+
+    
+  BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
+  BP32.forgetBluetoothKeys();
+
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+
     joyX = 0;
     joyY = 0;
-    currentMode = 0;
+    currentMode = -1;
+    power = 100;
 }
 
 std::vector<int> initialColor()
@@ -190,6 +210,8 @@ void colorSensing(GamepadPtr controller)
         
         std::vector<int> newColor = initialColor();
         int diff = totalDiff(newColor, sample);
+        // leftMotor((power*10)/10);
+        // rightMotor((power*10)/10);
         while (diff < 50)
         {
             Serial.println("Waiting to begin search");
@@ -208,6 +230,8 @@ void colorSensing(GamepadPtr controller)
             Serial.println(diff);
             delay(1000);
         }
+        // rightMotor(0);
+        // leftMotor(0);
         Serial.println("Found inital color!");
         digitalWrite(2, HIGH); // writes a digital high to pin 2
         delay(10000);          // waits for 10000 milliseconds (10 seconds)
@@ -244,7 +268,6 @@ void driving(GamepadPtr controller)
 {
     joyX = controller->axisX() / 3;
     joyY = controller->axisY() / 3;
-
     if (joyX > 50)
     {
         rightMotor(0);
@@ -285,12 +308,15 @@ void loop()
             {
             case 0:
                 colorSensing(controller);
+                Serial.println("ColorSensingMode");
                 break;
             case 1:
                 driving(controller);
+                Serial.println("Driving");
                 break;
             default:
                 driving(controller);
+                Serial.println("Driving");
                 break;
             }
 
@@ -316,6 +342,6 @@ void loop()
 
             // PHYSICAL BUTTON A
         }
-        vTaskDelay(1);
+        vTaskDelay(3000);
     }
 }
