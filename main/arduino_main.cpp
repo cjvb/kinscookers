@@ -405,7 +405,7 @@ void lineSensor() {
     }
 }
 
-void maze(){
+void connorMaze(){
         ledFeedback(0,1,0);
         // check distances fom sensors
         float distLeft = float(ir_left.getDistanceFloat());
@@ -423,14 +423,14 @@ void maze(){
                 leftMotor(-150); 
                 leftMotor(-120);
                 rightMotor(-120);
-                maze();
+                connorMaze();
             } else if(25 <distLeft) {
                 ledFeedback(0,1,1);
                 rightMotor(-150); 
                 leftMotor(150); 
                 leftMotor(-120);
                 rightMotor(-120);
-                maze();
+                connorMaze();
             }
 
         //if right dist is greater, slow down the right motor
@@ -459,6 +459,65 @@ void maze(){
         
         delay(1); //delay to prevent over-correction?
     }
+
+void krishMaze() {
+    //average distances for accuracy
+    float distLeft = (ir_left.getDistanceFloat() + ir_left.getDistanceFloat()+ ir_left.getDistanceFloat()) / 3.0;
+    float distRight = (ir_right.getDistanceFloat() + ir_right.getDistanceFloat() + ir_right.getDistanceFloat()) / 3.0;
+
+    //adaptable values
+    const float targetDistance = 11.0;  //how far we want to be from the wall ideally, adjust accordingly
+    const float powerTurnThreshold = 5.0;
+    const float baseSpeed = -120;
+    int adjustment = 0;
+    
+    //debugging
+    Serial.print("LEFT: ");
+    Serial.print(distLeft);
+    Serial.print(" and RIGHT: ");
+    Serial.println(distRight);
+
+    if (distRight > targetDistance) {
+        if (distRight > (targetDistance+ powerTurnThreshold)) {
+            ledFeedback(1,0,1);
+                rightMotor(150); 
+                leftMotor(-150); 
+                leftMotor(-120);
+                rightMotor(-120);
+                krishMaze();
+        }
+        ledFeedback(1, 0, 0);
+        adjustment = (distRight - targetDistance) * 10; // Increase correction factor as needed
+        adjustment = constrain(adjustment, -50, 0);
+        rightMotor(baseSpeed + adjustment);
+        leftMotor(baseSpeed);
+    }
+
+    if (distLeft > targetDistance) {
+        if (distLeft > (targetDistance+ powerTurnThreshold)) {
+            ledFeedback(0,1,1);
+                rightMotor(-150); 
+                leftMotor(150); 
+                leftMotor(-120);
+                rightMotor(-120);
+                krishMaze();
+        }
+        ledFeedback(0, 0, 1);
+        adjustment = (distLeft - targetDistance) * 10; // Increase correction factor as needed
+        adjustment = constrain(adjustment, -50, 0);
+        rightMotor(baseSpeed + adjustment);
+        leftMotor(baseSpeed);
+    }
+
+    else {
+        // Move straight if within threshold
+        ledFeedback(0, 1, 0); 
+        rightMotor(baseSpeed);
+        leftMotor(baseSpeed);
+    }
+
+
+}
 
 void setup()
 {
@@ -583,7 +642,7 @@ void loop()
                 Serial.println("Line Sensor");
                 break;
             case 3:
-                maze();
+                connorMaze();
                 Serial.println("Maze");
                 break;
             default:
