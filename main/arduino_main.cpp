@@ -242,10 +242,10 @@ int totalDiff(std::vector<int> v1, std::vector<int> v2)
 }
 
 void buffer() {
-    leftMotor(190);
-    rightMotor(200);
+    leftMotor(130);
+    rightMotor(121);
     delay(200);
-    leftMotor(0);
+    leftMotor(0);   
     rightMotor(0);
     delay(200);
 }
@@ -412,119 +412,190 @@ void lineSensor() {
     }
 }
 
-void connorMaze(){
-        ledFeedback(0,1,0);
+// void connorMaze(){
+//         ledFeedback(0,1,0);
+//         // check distances fom sensors
+//         float distLeft = float(ir_left.getDistanceFloat());
+//         float distRight = float(ir_right.getDistanceFloat());
+//         Serial.println("LEFT: ");
+//         Serial.print(distLeft);
+//         Serial.println("RIGHT: ");
+//         Serial.println(distRight);
+//         delay(50);
+        
+
+//             if (30< distRight) {
+//                 ledFeedback(1,0,1);
+//                 rightMotor(150); 
+//                 leftMotor(-150); 
+//                 leftMotor(-120);
+//                 rightMotor(-120);
+//                 connorMaze();
+//             } else if(25 <distLeft) {
+//                 ledFeedback(0,1,1);
+//                 rightMotor(-150); 
+//                 leftMotor(150); 
+//                 leftMotor(-120);
+//                 rightMotor(-120);
+//                 connorMaze();
+//             }
+
+//         //if right dist is greater, slow down the right motor
+//         if (distRight < 11.00) {
+//             ledFeedback(1,0,0);
+//             Serial.println("adjust going left");
+//             rightMotor(-140);
+//             leftMotor(-130);
+//             delay(20);
+//         } 
+//         //if left left dist is greater, slow down the left motor
+//         else if (distLeft  < 11.0) {
+//             ledFeedback(0,1,0);
+//             Serial.println("adjust going right");
+//             rightMotor(-110);
+//             leftMotor(-150);
+//             delay(20);
+//         } 
+//         //if distances equal go straight (may not actually go straight)
+//         else {
+//             rightMotor(-166);
+//             leftMotor(-166);
+//             Serial.println("go straight");
+//             delay(100);
+//         }
+        
+//         delay(1); //delay to prevent over-correction?
+//     }
+
+// void krishMaze() {
+//     //average distances for accuracy
+//     float distLeft = (ir_left.getDistanceFloat()) / 3.0;
+//     float distRight = (ir_right.getDistanceFloat()) / 3.0;
+
+//     //adaptable values
+//     const float targetDistance = 11.0;  //how far we want to be from the wall ideally, adjust accordingly
+//     const float powerTurnThreshold = 5.0;
+//     const float baseSpeed = -175;
+//     int adjustment = 0;
+    
+//     //debugging
+//     Serial.print("LEFT: ");
+//     Serial.print(distLeft);
+//     Serial.print(" and RIGHT: ");
+//     Serial.println(distRight);
+
+//     if (distRight > targetDistance) {
+//         if (distRight > (targetDistance+ powerTurnThreshold)) {
+//             ledFeedback(1,0,1);
+//                 Serial.println("Super Right");
+//                 rightMotor(250); 
+//                 leftMotor(-250); 
+//                 delay(350);
+//                 leftMotor(baseSpeed);
+//                 rightMotor(baseSpeed);
+//                 delay(450);
+//         }
+//         else {
+//         Serial.println("Right");
+//         ledFeedback(1, 0, 0);
+//         adjustment = (distRight - targetDistance) * 10; // Increase correction factor as needed
+//         adjustment = constrain(adjustment, -20, 0);
+//         rightMotor(baseSpeed + adjustment);
+//         leftMotor(baseSpeed);
+//         }
+//     }
+
+//     if (distLeft > targetDistance) {
+//         if (distLeft > (targetDistance+ powerTurnThreshold)) {
+//             Serial.println("Super Left");
+//             ledFeedback(0,1,1);
+//                 rightMotor(-250); 
+//                 leftMotor(250); 
+//                 delay(350);
+//                 leftMotor(baseSpeed);
+//                 rightMotor(baseSpeed);
+//                 delay(450);
+//         }
+//         else{
+//         Serial.println("Left");
+//         ledFeedback(0, 0, 1);
+//         adjustment = (distLeft - targetDistance) * 5; // Increase correction factor as needed
+//         adjustment = constrain(adjustment, -20, 0);
+//         rightMotor(baseSpeed + adjustment);
+//         leftMotor(baseSpeed);
+//         }
+//     }
+
+//     else {
+//         // Move straight if within threshold
+//         Serial.println("Right");
+//         ledFeedback(0, 1, 0); 
+//         rightMotor(baseSpeed);
+//         leftMotor(baseSpeed);
+//     }
+
+
+// }
+void maze(){
+    int straight = 100;
+    int superturn = 150;
+    int adjust = 80;
+    int limp_adjust = 70;
         // check distances fom sensors
         float distLeft = float(ir_left.getDistanceFloat());
         float distRight = float(ir_right.getDistanceFloat());
-        Serial.println("LEFT: ");
-        Serial.print(distLeft);
-        Serial.println("RIGHT: ");
-        Serial.println(distRight);
-        delay(50);
-        
 
-            if (30< distRight) {
+
+            if (20 < distRight) {
+                leftMotor(-straight); //-100 and -100
+                rightMotor(-straight);
+                delay(200);  //150 and -150
                 ledFeedback(1,0,1);
-                rightMotor(150); 
-                leftMotor(-150); 
-                leftMotor(-120);
-                rightMotor(-120);
-                connorMaze();
-            } else if(25 <distLeft) {
+                rightMotor(superturn); 
+                leftMotor(-superturn);
+                delay(150);
+                leftMotor(-straight); //-100 and -100
+                rightMotor(-straight);
+                delay(200);
+            } else if(20 <distLeft) {
+                leftMotor(-straight);
+                rightMotor(-straight);
+                delay(200);
                 ledFeedback(0,1,1);
-                rightMotor(-150); 
-                leftMotor(150); 
-                leftMotor(-120);
-                rightMotor(-120);
-                connorMaze();
+                rightMotor(-superturn); 
+                leftMotor(superturn); 
+                delay(150);
+                leftMotor(-straight);
+                rightMotor(-straight);
+                delay(200);
             }
 
         //if right dist is greater, slow down the right motor
-        if (distRight < 11.00) {
+        if (distRight < 12.50) {
             ledFeedback(1,0,0);
             Serial.println("adjust going left");
-            rightMotor(-140);
-            leftMotor(-130);
+            rightMotor(-straight); //-100 and -80
+            leftMotor(-adjust);
             delay(20);
         } 
         //if left left dist is greater, slow down the left motor
-        else if (distLeft  < 11.0) {
+        else if (distLeft  < 12.5) {
             ledFeedback(0,1,0);
             Serial.println("adjust going right");
-            rightMotor(-110);
-            leftMotor(-150);
+            rightMotor(-limp_adjust); //-70 and -100
+            leftMotor(-straight);
             delay(20);
         } 
         //if distances equal go straight (may not actually go straight)
         else {
-            rightMotor(-166);
-            leftMotor(-166);
+            rightMotor(-straight); //-100 for straight
+            leftMotor(-straight);
             Serial.println("go straight");
-            delay(100);
+            delay(20);
         }
-        
-        delay(1); //delay to prevent over-correction?
+
+
     }
-
-void krishMaze() {
-    //average distances for accuracy
-    float distLeft = (ir_left.getDistanceFloat() + ir_left.getDistanceFloat()+ ir_left.getDistanceFloat()) / 3.0;
-    float distRight = (ir_right.getDistanceFloat() + ir_right.getDistanceFloat() + ir_right.getDistanceFloat()) / 3.0;
-
-    //adaptable values
-    const float targetDistance = 11.0;  //how far we want to be from the wall ideally, adjust accordingly
-    const float powerTurnThreshold = 5.0;
-    const float baseSpeed = -120;
-    int adjustment = 0;
-    
-    //debugging
-    Serial.print("LEFT: ");
-    Serial.print(distLeft);
-    Serial.print(" and RIGHT: ");
-    Serial.println(distRight);
-
-    if (distRight > targetDistance) {
-        if (distRight > (targetDistance+ powerTurnThreshold)) {
-            ledFeedback(1,0,1);
-                rightMotor(150); 
-                leftMotor(-150); 
-                leftMotor(-120);
-                rightMotor(-120);
-                krishMaze();
-        }
-        ledFeedback(1, 0, 0);
-        adjustment = (distRight - targetDistance) * 10; // Increase correction factor as needed
-        adjustment = constrain(adjustment, -50, 0);
-        rightMotor(baseSpeed + adjustment);
-        leftMotor(baseSpeed);
-    }
-
-    if (distLeft > targetDistance) {
-        if (distLeft > (targetDistance+ powerTurnThreshold)) {
-            ledFeedback(0,1,1);
-                rightMotor(-150); 
-                leftMotor(150); 
-                leftMotor(-120);
-                rightMotor(-120);
-                krishMaze();
-        }
-        ledFeedback(0, 0, 1);
-        adjustment = (distLeft - targetDistance) * 10; // Increase correction factor as needed
-        adjustment = constrain(adjustment, -50, 0);
-        rightMotor(baseSpeed + adjustment);
-        leftMotor(baseSpeed);
-    }
-
-    else {
-        // Move straight if within threshold
-        ledFeedback(0, 1, 0); 
-        rightMotor(baseSpeed);
-        leftMotor(baseSpeed);
-    }
-
-
-}
 
 void setup()
 {
@@ -649,7 +720,7 @@ void loop()
                 Serial.println("Line Sensor");
                 break;
             case 3:
-                krishMaze();
+                maze();
                 Serial.println("Maze");
                 break;
             default:
