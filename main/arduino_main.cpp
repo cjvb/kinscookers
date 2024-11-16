@@ -241,6 +241,15 @@ int totalDiff(std::vector<int> v1, std::vector<int> v2)
     return diff;
 }
 
+void buffer() {
+    leftMotor(190);
+    rightMotor(200);
+    delay(200);
+    leftMotor(0);
+    rightMotor(0);
+    delay(200);
+}
+
 void colorSensing(GamepadPtr controller)
 {
     ledFeedback(1,0,0);
@@ -255,14 +264,13 @@ void colorSensing(GamepadPtr controller)
         
         std::vector<int> newColor = initialColor();
         int diff = totalDiff(newColor, sample);
-        // leftMotor((power*10)/10);
-        // rightMotor((power*10)/10);
         while (diff < 50)
         {
             Serial.println("Waiting to begin search");
-            delay(250);
+            delay(500);
             newColor = initialColor();
             diff = totalDiff(newColor, sample);
+            buffer();
         }
 
         Serial.println("Beginning search..");
@@ -273,40 +281,39 @@ void colorSensing(GamepadPtr controller)
             newColor = initialColor();
             diff = totalDiff(newColor, sample);
             Serial.println(diff);
-            delay(1000);
+            delay(5);
+            buffer();
         }
-        // rightMotor(0);
-        // leftMotor(0);
+        rightMotor(0);
+        leftMotor(0);
         Serial.println("Found inital color!");
-        digitalWrite(2, HIGH); // writes a digital high to pin 2
-        delay(10000);          // waits for 10000 milliseconds (10 seconds)
-        digitalWrite(2, LOW);
-        delay(1000);
+        buzz(1);
+        delay(3000);
+        buzz(0);
     }
-    if (controller->r1() == 1)
-    {
-        int diff = 0;
-        std::vector<int> color = initialColor();
-        diff = totalDiff(color, sample);
-        Serial.println(diff);
-        while (diff > 50)
-        {
-            Serial.println("Not the same color!");
-            diff = 0;
-            color = initialColor();
-            for (int i = 0; i < 3; i++)
-            {
-                diff += abs(color[i] - sample[i]);
-            }
-            Serial.println(diff);
-            delay(1000);
-        }
-        Serial.println("Found inital color!");
-        digitalWrite(2, HIGH); // writes a digital high to pin 2
-        delay(10000);          // waits for 10000 milliseconds (10 seconds)
-        digitalWrite(2, LOW);
-        delay(1000);
-    }
+    // if (controller->r1() == 1)
+    // {
+    //     int diff = 0;
+    //     std::vector<int> color = initialColor();
+    //     diff = totalDiff(color, sample);
+    //     Serial.println(diff);
+    //     while (diff > 50)
+    //     {
+    //         Serial.println("Not the same color!");
+    //         diff = 0;
+    //         color = initialColor();
+    //         for (int i = 0; i < 3; i++)
+    //         {
+    //             diff += abs(color[i] - sample[i]);
+    //         }
+    //         Serial.println(diff);
+    //         delay(1000);
+    //     }
+    //     Serial.println("Found inital color!");
+    //     buzz(1);
+    //     delay(1000);
+    //     buzz(0);
+    // }
 }
 
 void driving(GamepadPtr controller)
@@ -577,26 +584,26 @@ void setup()
     qtr.setTypeAnalog(); // or setTypeRC()
     qtr.setSensorPins((const uint8_t[]) {36, 39, 34, 35}, 4); // pin numbers go in the curly brackets {}, and number of pins goes after
     //calibration sequence
-    for (uint8_t i = 0; i < 250; i++) {
-        delay(20); 
-        Serial.println("calibrating");
-        qtr.calibrate();
-        superTurn(rightTurn);
-        /*if(digitalRead(lineReader) == 1)
-            count++;
-        if(count%2 == 0)
-            superTurn(leftTurn);
-        else
-            superTurn(rightTurn);*/
-        //flash blue light 
-        if(i%10 == 0){
-            ledFeedback(0, 0, 1);
-        }
-        if(i%10==5){
-            ledFeedback(0, 0, 0);
-        }
-    }
-    hasCalibarate = true;
+    // for (uint8_t i = 0; i < 250; i++) {
+    //     delay(20); 
+    //     Serial.println("calibrating");
+    //     qtr.calibrate();
+    //     superTurn(rightTurn);
+    //     /*if(digitalRead(lineReader) == 1)
+    //         count++;
+    //     if(count%2 == 0)
+    //         superTurn(leftTurn);
+    //     else
+    //         superTurn(rightTurn);*/
+    //     //flash blue light 
+    //     if(i%10 == 0){
+    //         ledFeedback(0, 0, 1);
+    //     }
+    //     if(i%10==5){
+    //         ledFeedback(0, 0, 0);
+    //     }
+    // }
+    // hasCalibarate = true;
 }
 
 
@@ -642,7 +649,7 @@ void loop()
                 Serial.println("Line Sensor");
                 break;
             case 3:
-                connorMaze();
+                krishMaze();
                 Serial.println("Maze");
                 break;
             default:
