@@ -37,8 +37,13 @@ int rightTurn = 1;
 bool superLeft = false;
 bool superRight = false;
 int supTurnDelay = 0;
+//maze var
+int straight = 175;
+int superturn = 250;
+int adjust = 100;
+int limp_adjust = 70;
 //motor power
-int power = 180;
+int power = 190;
 int partialPower = 0;
 int superPow = -power;
 Servo servo;
@@ -54,6 +59,7 @@ Servo servo;
 #define greenLED 13
 #define redLED 12
 #define blueLED 2
+#define yellowLED 27
 #define buzzer 14
 #define lineReader 25
 int joyX;
@@ -152,8 +158,8 @@ void leftMotor(int speed)
 //lineSensor Controls
 void forward(){
     Serial.println("Move forward");
-    leftMotor((power*10)/10);
-    rightMotor((power*10)/10);
+    leftMotor((power*14)/10);
+    rightMotor((power*14)/10);
 }
 void leftShift(){
     Serial.println("Left shift");
@@ -184,7 +190,7 @@ void superTurn(int turnSide){
 }
 
 //debug code
-void ledFeedback(int redL, int greenL, int blueL){
+void ledFeedback(int redL, int greenL, int blueL, int yellowL){
     if(redL == 1)
         digitalWrite(redLED, HIGH);
     else
@@ -197,6 +203,10 @@ void ledFeedback(int redL, int greenL, int blueL){
         digitalWrite(blueLED, HIGH);
     else
         digitalWrite(blueLED, LOW);
+    if(yellowL == 1)
+        digitalWrite(yellowLED, HIGH);
+    else
+        digitalWrite(yellowLED, LOW);
 }
 void buzz(int buz){
     if (buz == 1)
@@ -242,17 +252,51 @@ int totalDiff(std::vector<int> v1, std::vector<int> v2)
 }
 
 void buffer() {
-    leftMotor(130);
-    rightMotor(121);
+    leftMotor(200);
+    rightMotor(200);
     delay(200);
     leftMotor(0);   
     rightMotor(0);
     delay(200);
 }
 
+void driving(GamepadPtr controller)
+{
+    ledFeedback(0,1,0,0);
+    if (controller && controller->isConnected()) {
+
+            if (controller->a()) {
+                buzz(1);
+            }
+            if (!controller->a()) {
+                buzz(0);
+            }
+            if (controller->l1() == 1) {
+                //Serial.print("Servo move");
+                servo.write(1600);
+            }
+            if (controller->r1() == 1) {
+                //Serial.print("Servo move");
+                servo.write(1400);
+            }
+            if (controller->l1() == 0 && controller->r1() == 0) {
+                //Serial.print("Servo stop");
+                servo.write(1500);
+            }
+            joyX = controller->axisX() / 2;
+            joyY = controller->axisY() / 2;
+            rightMotor(joyY+joyX);
+            leftMotor(joyY-joyX);
+        }
+}
+
+
 void colorSensing(GamepadPtr controller)
 {
-    ledFeedback(1,0,0);
+    BP32.update();
+    for (int i = 0; i < BP32_MAX_GAMEPADS; i++)
+    {
+    ledFeedback(1,0,0,0);
     if (controller->l1() == 1)
     {
         Serial.println("Sampling initial color...");
@@ -264,9 +308,11 @@ void colorSensing(GamepadPtr controller)
         
         std::vector<int> newColor = initialColor();
         int diff = totalDiff(newColor, sample);
-        while (diff < 50)
+        rightMotor(110);
+        leftMotor(110);
+        while (diff < 70)
         {
-            Serial.println("Waiting to begin search");
+            Serial.println("Waiting to begin seAarch");
             delay(500);
             newColor = initialColor();
             diff = totalDiff(newColor, sample);
@@ -275,13 +321,22 @@ void colorSensing(GamepadPtr controller)
 
         Serial.println("Beginning search..");
             Serial.println(diff);
-        while (diff >= 50)
+        while ((diff >= 70))
         {
+            BP32.update();
+            if(controller -> b() == 1) {
+                rightMotor(0);
+                leftMotor(0);
+                buzz(1);
+                delay(3000);
+                buzz(0);      
+                currentMode = 1; 
+                return;
+            }
             Serial.println("Not the same color!");
             newColor = initialColor();
             diff = totalDiff(newColor, sample);
             Serial.println(diff);
-            delay(5);
             buffer();
         }
         rightMotor(0);
@@ -290,6 +345,7 @@ void colorSensing(GamepadPtr controller)
         buzz(1);
         delay(3000);
         buzz(0);
+    }
     }
     // if (controller->r1() == 1)
     // {
@@ -316,38 +372,10 @@ void colorSensing(GamepadPtr controller)
     // }
 }
 
-void driving(GamepadPtr controller)
-{
-    ledFeedback(0,1,0);
-    if (controller && controller->isConnected()) {
 
-            if (controller->a()) {
-                digitalWrite(buzzer, HIGH);
-            }
-            if (!controller->a()) {
-                digitalWrite(buzzer, LOW);
-            }
-            if (controller->l1() == 1) {
-                //Serial.print("Servo move");
-                servo.write(1600);
-            }
-            if (controller->r1() == 1) {
-                //Serial.print("Servo move");
-                servo.write(1400);
-            }
-            if (controller->l1() == 0 && controller->r1() == 0) {
-                //Serial.print("Servo stop");
-                servo.write(1500);
-            }
-            joyX = controller->axisX() / 3;
-            joyY = controller->axisY() / 3;
-            rightMotor(joyY+joyX);
-            leftMotor(joyY-joyX);
-        }
-}
 
 void lineSensor() {
-        if(hasCalibarate){
+    if(hasCalibarate){
         rightMotor(0);
         leftMotor(0);
         hasCalibarate= false;
@@ -380,8 +408,8 @@ void lineSensor() {
     }
     if(superRight || superLeft)
     {
-        ledFeedback(0, 0, 0);
-        buzz(1);
+        ledFeedback(0, 0, 0, 1);
+        //buzz(1);
         if(superRight){
             //stop(50);
             superTurn(rightTurn);
@@ -397,18 +425,18 @@ void lineSensor() {
     }
     if((sensors[1] < maxWhiteVal && sensors[2] < maxWhiteVal)&&(!superLeft && !superRight)){
         forward();
-        ledFeedback(0, 0, 1);
-        buzz(0);
+        ledFeedback(0, 0, 1, 0);
+        //buzz(0);
     }
     else if((sensors[1] > minBlackVal) && (!superLeft && !superRight)){
         leftShift();
-        ledFeedback(1, 0, 0);
-        buzz(0);
+        ledFeedback(1, 0, 0, 0);
+        //buzz(0);
     }
     else if((sensors[2] > minBlackVal) && (!superLeft && !superRight)){
         rightShift();
-        ledFeedback(0, 1, 0);
-        buzz(0);
+        ledFeedback(0, 1, 0, 0);
+        //buzz(0);
     }
 }
 
@@ -537,54 +565,51 @@ void lineSensor() {
 
 // }
 void maze(){
-    int straight = 100;
-    int superturn = 150;
-    int adjust = 80;
-    int limp_adjust = 70;
+    
         // check distances fom sensors
         float distLeft = float(ir_left.getDistanceFloat());
         float distRight = float(ir_right.getDistanceFloat());
 
 
             if (20 < distRight) {
-                leftMotor(-straight); //-100 and -100
-                rightMotor(-straight);
-                delay(200);  //150 and -150
-                ledFeedback(1,0,1);
-                rightMotor(superturn); 
-                leftMotor(-superturn);
-                delay(150);
-                leftMotor(-straight); //-100 and -100
-                rightMotor(-straight);
+                leftMotor(-100); //-100 and -100
+                rightMotor(-100);
+                delay(500);  //150 and -150
+                ledFeedback(1,0,1,0);
+                rightMotor(150); 
+                leftMotor(-150);
                 delay(200);
+                leftMotor(-100); //-100 and -100
+                rightMotor(-100);
+                delay(500);
             } else if(20 <distLeft) {
-                leftMotor(-straight);
-                rightMotor(-straight);
+                leftMotor(-100);
+                rightMotor(-100);
+                delay(500);
+                ledFeedback(0,1,1,0);
+                rightMotor(-150); 
+                leftMotor(150); 
                 delay(200);
-                ledFeedback(0,1,1);
-                rightMotor(-superturn); 
-                leftMotor(superturn); 
-                delay(150);
-                leftMotor(-straight);
-                rightMotor(-straight);
-                delay(200);
+                leftMotor(-100);
+                rightMotor(-100);
+                delay(500);
             }
 
         //if right dist is greater, slow down the right motor
-        if (distRight < 12.50) {
-            ledFeedback(1,0,0);
+        if (distRight < 14.5) {
+            ledFeedback(1,0,0,0);
             Serial.println("adjust going left");
-            rightMotor(-straight); //-100 and -80
-            leftMotor(-adjust);
-            delay(20);
+            rightMotor(-100); //-100 and -80
+            leftMotor(-80);
+            delay(200);
         } 
         //if left left dist is greater, slow down the left motor
-        else if (distLeft  < 12.5) {
-            ledFeedback(0,1,0);
+        else if (distLeft  < 14.5) {
+            ledFeedback(0,1,0, 0);
             Serial.println("adjust going right");
-            rightMotor(-limp_adjust); //-70 and -100
-            leftMotor(-straight);
-            delay(20);
+            rightMotor(-70); //-70 and -100
+            leftMotor(-100);
+            delay(200);
         } 
         //if distances equal go straight (may not actually go straight)
         else {
@@ -650,31 +675,34 @@ void setup()
     pinMode(blueLED, OUTPUT);
     pinMode(redLED, OUTPUT);
     pinMode(greenLED, OUTPUT);
+    pinMode(yellowLED, OUTPUT);
     pinMode(buzzer, OUTPUT);
     pinMode(lineReader, INPUT);
+
     qtr.setTypeAnalog(); // or setTypeRC()
     qtr.setSensorPins((const uint8_t[]) {36, 39, 34, 35}, 4); // pin numbers go in the curly brackets {}, and number of pins goes after
-    //calibration sequence
-    // for (uint8_t i = 0; i < 250; i++) {
-    //     delay(20); 
-    //     Serial.println("calibrating");
-    //     qtr.calibrate();
-    //     superTurn(rightTurn);
-    //     /*if(digitalRead(lineReader) == 1)
-    //         count++;
-    //     if(count%2 == 0)
-    //         superTurn(leftTurn);
-    //     else
-    //         superTurn(rightTurn);*/
-    //     //flash blue light 
-    //     if(i%10 == 0){
-    //         ledFeedback(0, 0, 1);
-    //     }
-    //     if(i%10==5){
-    //         ledFeedback(0, 0, 0);
-    //     }
-    // }
-    // hasCalibarate = true;
+    // calibration sequence
+    for (uint8_t i = 0; i < 250; i++) {
+        delay(20); 
+        Serial.println("calibrating");
+        qtr.calibrate();
+        rightMotor(power);
+        leftMotor(-power);
+        /*if(digitalRead(lineReader) == 1)
+            count++;
+        if(count%2 == 0)
+            superTurn(leftTurn);
+        else
+            superTurn(rightTurn);*/
+        //flash blue light 
+        if(i%10 == 0){
+            ledFeedback(0, 0, 1, 0);
+        }
+        if(i%10==5){
+            ledFeedback(0, 0, 0, 0);
+        }
+    }
+    hasCalibarate = true;
 }
 
 
